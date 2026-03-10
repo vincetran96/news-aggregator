@@ -17,7 +17,7 @@ def make_filepath(path: str, extension: str = "") -> str:
 
 def write_plaintext(content: str, path: str, extension: str = ".txt") -> str:
     """
-    Writes a string to a plaintext file.    
+    Writes a string to a plaintext file.
 
     Returns the resolved file path that was written.
     """
