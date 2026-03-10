@@ -45,14 +45,34 @@ class BaseUrlCollector(ABC):
         max_retries: int = 3,
         retry_delay: float = 5.0,
         follow_redirects: bool = True,
+        http_conn_limit: int = 10,
     ):
+        """
+        Args:
+            concurrent_limit (int): Maximum number of URLs fetched in a single
+                batch before persisting results and waiting for the next interval.
+            batch_interval (float): Upper bound in seconds for the random wait
+                between batches. Actual wait is randomized in [0.5, batch_interval].
+            request_timeout (float): Per-request timeout in seconds passed to
+                the underlying httpx AsyncClient.
+            max_retries (int): Number of attempts per URL before marking it as
+                failed.
+            retry_delay (float): Upper bound in seconds for the randomized
+                exponential back-off between retries.
+            follow_redirects (bool): Whether the httpx client should follow HTTP
+                301/302 redirects automatically. Enables transparent handling of
+                out-of-range page redirects.
+            http_conn_limit (int): Maximum number of simultaneous open TCP
+                connections in the shared httpx connection pool. Keep this
+                conservative to avoid overwhelming the target server.
+        """
         self.concurrent_limit: int = concurrent_limit
         self.batch_interval: float = batch_interval
         self.request_timeout: float = request_timeout
         self.max_retries: int = max_retries
         self.retry_delay: float = retry_delay
         self.follow_redirects: bool = follow_redirects
-        self.http_conn_limit: int = 5  # This number should be conservative.
+        self.http_conn_limit: int = http_conn_limit
 
     @abstractmethod
     def iter_urls(self) -> Iterator[str]:

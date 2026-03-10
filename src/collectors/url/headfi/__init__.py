@@ -46,9 +46,10 @@ class HeadFiURLCollector(BaseUrlCollector):
         threads: list[HeadFiThread],
         conn: DuckDBPyConnection,
         *args,
+        http_conn_limit: int = 5,
         **kwargs,
     ):
-        super().__init__(*args, **kwargs)
+        super().__init__(*args, http_conn_limit=http_conn_limit, **kwargs)
         self._threads = threads
         self._conn = conn
         self._url_meta: dict[str, UrlCrawlMeta] = {}
@@ -139,4 +140,4 @@ class HeadFiURLCollector(BaseUrlCollector):
         batch_id: str,
     ) -> None:
         upsert_raw_pages(self._conn, results, self._url_meta)
-        print(f"[batch {batch_id}] Upserted {len(results)} results to raw_pages")
+        print(f"[Batch {batch_id}] Upserted {len(results)} results to raw_pages")
