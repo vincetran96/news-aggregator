@@ -9,7 +9,7 @@ import re
 from bs4 import BeautifulSoup, Tag
 from duckdb import DuckDBPyConnection
 
-from src.storage.schemas.headfi.post_content import FULL_TBL_NAME as TARGET_TBL_NAME
+from src.storage.schemas.headfi.post_content import FULL_TBL_NAME as TGT_TBL_NAME
 from src.storage.schemas.headfi.raw import FULL_TBL_NAME as SRC_TBL_NAME
 from src.utils.datetime import now_utc
 
@@ -122,11 +122,11 @@ def _upsert_posts(conn: DuckDBPyConnection, posts: list[dict]) -> None:
         for p in posts
     ]
 
-    row = conn.execute(f"SELECT COUNT(*) FROM {TARGET_TBL_NAME}").fetchone()
+    row = conn.execute(f"SELECT COUNT(*) FROM {TGT_TBL_NAME}").fetchone()
     count_before = row[0] if row else 0
     conn.executemany(
         f"""
-        INSERT INTO {TARGET_TBL_NAME} (
+        INSERT INTO {TGT_TBL_NAME} (
             post_id, thread_base_url, final_url, page_num, post_num,
             author, posted_at_raw, content_html, content_text, insert_tstamp
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -134,11 +134,11 @@ def _upsert_posts(conn: DuckDBPyConnection, posts: list[dict]) -> None:
         """,
         rows,
     )
-    row = conn.execute(f"SELECT COUNT(*) FROM {TARGET_TBL_NAME}").fetchone()
+    row = conn.execute(f"SELECT COUNT(*) FROM {TGT_TBL_NAME}").fetchone()
     count_after = row[0] if row else 0
     inserted = count_after - count_before
     skipped = len(posts) - inserted
-    print(f"Inserted {inserted} post(s) into {TARGET_TBL_NAME} ({skipped} skipped as duplicates).")
+    print(f"Inserted {inserted} post(s) into {TGT_TBL_NAME} ({skipped} skipped as duplicates).")
 
 
 def process_new_pages(conn: DuckDBPyConnection) -> None:
@@ -153,7 +153,7 @@ def process_new_pages(conn: DuckDBPyConnection) -> None:
     The ">=" boundary means rows at exactly the watermark are re-evaluated;
     `ON CONFLICT DO NOTHING` on post_id ensures this is idempotent.
     """
-    watermark_row = conn.execute(f"SELECT MAX(insert_tstamp) FROM {TARGET_TBL_NAME}").fetchone()
+    watermark_row = conn.execute(f"SELECT MAX(insert_tstamp) FROM {TGT_TBL_NAME}").fetchone()
     watermark = watermark_row[0] if watermark_row else None
 
     if watermark is None:
@@ -170,7 +170,7 @@ def process_new_pages(conn: DuckDBPyConnection) -> None:
             SELECT final_url, content, thread_base_url, page_num
             FROM {SRC_TBL_NAME}
             WHERE is_success = TRUE
-              AND insert_tstamp >= ?
+                AND insert_tstamp >= ?
             """,
             [watermark],
         ).fetchall()
