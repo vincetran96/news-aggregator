@@ -1,0 +1,43 @@
+# Python bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Virtual environment
+.venv
+
+# Distribution / packaging
+*.egg-info/
+*.egg
+dist/
+build/
+MANIFEST
+
+# Unit test / coverage
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.hypothesis/
+
+# Type checkers
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pyre/
+.pytype/
+
+# Environments / secrets
+.env
+
+# Collector output
+output/
+
+# macOS
+.DS_Store
+
+# IDEs
+.vscode/
+.idea/
+.cursor/
