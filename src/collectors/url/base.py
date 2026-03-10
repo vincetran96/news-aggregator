@@ -2,9 +2,10 @@ import asyncio
 import random
 import time
 from abc import ABC, abstractmethod
+from collections.abc import AsyncGenerator, Iterator
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, AsyncGenerator, Iterator
+from typing import Any
 
 from httpx import AsyncClient, Limits
 
@@ -14,6 +15,7 @@ class UrlCollectorResult:
     url: str
     request_tstamp: datetime
     response_tstamp: datetime | None = None
+    final_url: str | None = None
     num_attempts: int = 0
     status_code: int | None = None
     content: Any | None = None
@@ -25,6 +27,7 @@ class UrlCollectorResult:
             "url": self.url,
             "request_tstamp": self.request_tstamp.isoformat(),
             "response_tstamp": self.response_tstamp.isoformat() if self.response_tstamp else None,
+            "final_url": self.final_url,
             "num_attempts": self.num_attempts,
             "status_code": self.status_code,
             "content": self.content,
@@ -49,7 +52,7 @@ class BaseUrlCollector(ABC):
         self.max_retries: int = max_retries
         self.retry_delay: float = retry_delay
         self.follow_redirects: bool = follow_redirects
-        self.http_conn_limit: int = 5                   # This number should be conservative.
+        self.http_conn_limit: int = 5  # This number should be conservative.
 
     @abstractmethod
     def iter_urls(self) -> Iterator[str]:
@@ -91,7 +94,9 @@ class BaseUrlCollector(ABC):
     def _rand_retry_delay(self) -> float:
         return random.uniform(1, self.retry_delay)
 
-    async def _get_batch(self, url_batch: list[str], client: AsyncClient) -> list[UrlCollectorResult]:
+    async def _get_batch(
+        self, url_batch: list[str], client: AsyncClient
+    ) -> list[UrlCollectorResult]:
         """
         Gets all URLs in this batch. The number of URLs in this batch should
         conform to the concurrent limit.
@@ -99,7 +104,9 @@ class BaseUrlCollector(ABC):
         tasks = [self._get_url_result(url=url, client=client) for url in url_batch]
         return await asyncio.gather(*tasks)
 
-    async def _get_with_limit(self, urls: list[str]) -> AsyncGenerator[list[UrlCollectorResult], None]:
+    async def _get_with_limit(
+        self, urls: list[str]
+    ) -> AsyncGenerator[list[UrlCollectorResult], None]:
         """
         Batches the provided URLs as per the concurrent limit.
         We use one single Async client for all the batches.
