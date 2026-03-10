@@ -5,7 +5,7 @@ On each run, each coordinator queries the database for the highest page
 already stored for its thread and advances by `crawl_window` pages.
 """
 
-from src.collectors.url.concretes.headfi import HeadFiCrawlCoordinator, HeadFiURLCollector
+from src.collectors.url.headfi import HeadFiCrawlCoordinator, HeadFiURLCollector
 from src.storage.db import get_connection
 from src.storage.schemas.headfi.raw import SCHEMA_DDL, TBL_DDL
 
