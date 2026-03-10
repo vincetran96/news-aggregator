@@ -29,7 +29,7 @@ def main() -> None:
                 thread_base_url=base_url,
                 conn=conn,
             )
-            thread = coordinator.get_next_thread(crawl_window=CRAWL_WINDOW)
+            thread = coordinator.get_next_window(crawl_window=CRAWL_WINDOW)
             print(f"[{base_url}]: To collect pages {thread.start_i} to {thread.end_i}")
             threads.append(thread)
 

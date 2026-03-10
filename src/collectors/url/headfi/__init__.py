@@ -25,7 +25,7 @@ class HeadFiCrawlCoordinator:
         self._thread_base_url = thread_base_url
         self._conn = conn
 
-    def get_next_thread(self, crawl_window: int) -> HeadFiThread:
+    def get_next_window(self, crawl_window: int) -> HeadFiThread:
         """
         Returns a HeadFiThread starting one page beyond the current maximum,
         spanning `crawl_window` pages.
@@ -46,10 +46,13 @@ class HeadFiURLCollector(BaseUrlCollector):
         threads: list[HeadFiThread],
         conn: DuckDBPyConnection,
         *args,
+        follow_redirects: bool = False,
         http_conn_limit: int = 5,
         **kwargs,
     ):
-        super().__init__(*args, http_conn_limit=http_conn_limit, **kwargs)
+        super().__init__(
+            *args, http_conn_limit=http_conn_limit, follow_redirects=follow_redirects, **kwargs
+        )
         self._threads = threads
         self._conn = conn
         self._url_meta: dict[str, UrlCrawlMeta] = {}
@@ -98,6 +101,8 @@ class HeadFiURLCollector(BaseUrlCollector):
             try:
                 resp = await client.get(url)
                 resp.raise_for_status()
+                if resp.is_redirect:
+                    raise ValueError(f"Unexpected redirect to: {resp.headers.get('location', '?')}")
                 result.final_url = str(resp.url)
                 result.response_tstamp = now_utc()
                 result.status_code = resp.status_code
@@ -122,7 +127,11 @@ class HeadFiURLCollector(BaseUrlCollector):
         """
         for thread in self._threads:
             for i in range(thread.start_i, thread.end_i + 1):
-                url = thread.base_url.format(i=i)
+                # Special case for i == 1.
+                if i == 1:
+                    url = thread.base_url.replace("/page-{i}", "")
+                else:
+                    url = thread.base_url.format(i=i)
                 yield url, UrlCrawlMeta(thread_base_url=thread.base_url, page_num=i)
 
     def _build_url_meta(self) -> dict[str, UrlCrawlMeta]:
