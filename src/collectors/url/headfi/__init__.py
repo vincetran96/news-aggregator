@@ -8,8 +8,8 @@ from duckdb import DuckDBPyConnection
 from httpx import AsyncClient
 
 from src.collectors.url.base import BaseUrlCollector, UrlCollectorResult
-from src.collectors.url.concretes.headfi.dataclasses import HeadFiThread, UrlCrawlMeta
-from src.collectors.url.concretes.headfi.helpers import get_max_page_num, upsert_raw_pages
+from src.collectors.url.headfi.dataclasses import HeadFiThread, UrlCrawlMeta
+from src.collectors.url.headfi.helpers import get_max_page_num, upsert_raw_pages
 from src.utils.datetime import now_utc
 
 

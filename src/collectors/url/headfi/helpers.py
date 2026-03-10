@@ -1,7 +1,7 @@
 import duckdb
 
 from src.collectors.url.base import UrlCollectorResult
-from src.collectors.url.concretes.headfi.dataclasses import UrlCrawlMeta
+from src.collectors.url.headfi.dataclasses import UrlCrawlMeta
 from src.storage.schemas.headfi.raw import FULL_TBL_NAME
 from src.utils.datetime import now_utc
 
