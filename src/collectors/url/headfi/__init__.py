@@ -129,7 +129,7 @@ class HeadFiURLCollector(BaseUrlCollector):
             for i in range(thread.start_i, thread.end_i + 1):
                 # Special case for i == 1.
                 if i == 1:
-                    url = thread.base_url.replace("/page-{i}", "")
+                    url = thread.base_url.replace("page-{i}", "")
                 else:
                     url = thread.base_url.format(i=i)
                 yield url, UrlCrawlMeta(thread_base_url=thread.base_url, page_num=i)
