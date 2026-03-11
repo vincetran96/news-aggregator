@@ -1,5 +1,5 @@
 """
-Module storing logic to process post content from Head-Fi threads
+Module storing logic to process post content from Head-Fi threads.
 """
 
 from __future__ import annotations
