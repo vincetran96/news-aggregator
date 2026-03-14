@@ -83,7 +83,7 @@ class BaseUrlCollector(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    async def get_urls(self, result_batchsize: int = 100000) -> None:
+    async def crawl_urls(self, result_batchsize: int = 100000) -> None:
         """
         Gets the results from the self's list of URLs.
         The signature must be implemented in concrete classes.
@@ -98,15 +98,15 @@ class BaseUrlCollector(ABC):
         """
         raise NotImplementedError
 
-    def run(self, *, runner=asyncio.run, **kwargs) -> None:
+    def collect(self, *, runner=asyncio.run, **kwargs) -> None:
         """
-        Synchronous entry point that wraps `get_urls` for callers that should not
+        Synchronous entry point that wraps `crawl_urls` for callers that should not
         need to manage an event loop directly.
 
         `runner` can be replaced with a custom async runner (e.g. one that spawns
         a new event loop per thread when using concurrent.futures.ThreadPoolExecutor).
         """
-        runner(self.get_urls(**kwargs))
+        runner(self.crawl_urls(**kwargs))
 
     def _rand_batch_interval(self) -> float:
         return random.uniform(1, self.batch_interval)
@@ -114,17 +114,17 @@ class BaseUrlCollector(ABC):
     def _rand_retry_delay(self) -> float:
         return random.uniform(1, self.retry_delay)
 
-    async def _get_batch(
+    async def _crawl_batch(
         self, url_batch: list[str], client: AsyncClient
     ) -> list[UrlCollectorResult]:
         """
-        Gets all URLs in this batch. The number of URLs in this batch should
+        Crawls all URLs in this batch. The number of URLs in this batch should
         conform to the concurrent limit.
         """
         tasks = [self._get_url_result(url=url, client=client) for url in url_batch]
         return await asyncio.gather(*tasks)
 
-    async def _get_with_limit(
+    async def _crawl_with_limit(
         self, urls: list[str]
     ) -> AsyncGenerator[list[UrlCollectorResult], None]:
         """
@@ -147,7 +147,7 @@ class BaseUrlCollector(ABC):
 
                 if not batch:
                     break
-                results = await self._get_batch(url_batch=batch, client=client)
+                results = await self._crawl_batch(url_batch=batch, client=client)
                 now_time = time.monotonic()
                 print(
                     f"Elapsed since start: {now_time - start_time:.2f}s, "

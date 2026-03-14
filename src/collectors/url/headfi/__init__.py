@@ -67,7 +67,7 @@ class HeadFiURLCollector(BaseUrlCollector):
             yield url
 
     @override
-    async def get_urls(self, result_batchsize: int = 100000) -> None:
+    async def crawl_urls(self, result_batchsize: int = 100000) -> None:
         """
         Crawls all URLs from iter_urls, accumulate results,
         and persists to the database in batches of `result_batchsize`.
@@ -78,7 +78,7 @@ class HeadFiURLCollector(BaseUrlCollector):
         accumulated: list[UrlCollectorResult] = []
         persist_idx = 0
 
-        async for batch in self._get_with_limit(urls):
+        async for batch in self._crawl_with_limit(urls):
             accumulated.extend(batch)
             if len(accumulated) >= result_batchsize:
                 self._persist_results(accumulated, batch_id=str(persist_idx))
