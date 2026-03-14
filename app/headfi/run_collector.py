@@ -43,7 +43,7 @@ def main() -> None:
             retry_delay=5.0,
         )
 
-        collector.run(result_batchsize=50)
+        collector.collect(result_batchsize=50)
 
 
 if __name__ == "__main__":
