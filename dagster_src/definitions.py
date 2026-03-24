@@ -4,8 +4,10 @@
 from dagster import Definitions, EnvVar
 
 from dagster_src.assets.headfi.posts import (
+    headfi_db_download,
     headfi_db_snapshot,
     headfi_post_content,
+    headfi_post_content_export,
     headfi_raw_pages,
 )
 from dagster_src.jobs import headfi_pipeline_job
@@ -14,8 +16,10 @@ from dagster_src.schedules import headfi_pipeline__daily
 
 defs = Definitions(
     assets=[
+        headfi_db_download,
         headfi_raw_pages,
         headfi_post_content,
+        headfi_post_content_export,
         headfi_db_snapshot,
     ],
     jobs=[
