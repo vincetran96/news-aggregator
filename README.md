@@ -5,6 +5,12 @@ uv run -m app.common.preview_db headfi.raw_pages --select-columns page_num final
 ```
 
 
+# K8s Deployment Steps
+```bash
+./build/build.sh localhost:5000/news-aggregator:latest
+```
+
+
 # Architectural Decisions
 
 A reference document capturing the key design choices made in the `news-aggregator` project, with reasoning and lessons for building similar crawl/pipeline systems.

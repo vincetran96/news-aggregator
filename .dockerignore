@@ -1,0 +1,15 @@
+.git/
+.venv/
+.cursor/
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+__pycache__/
+*.py[cod]
+data/
+output/
+k8s/
+*.md
+.pre-commit-config.yaml
+.env
+.DS_Store

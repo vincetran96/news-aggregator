@@ -1,0 +1,90 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: news-agg-codeserver
+  namespace: dagster
+  labels:
+    app: news-aggregator
+    component: dagster-codeserver
+spec:
+  selector:
+    app: news-aggregator
+    component: dagster-codeserver
+  ports:
+    - name: grpc
+      port: 4001
+      targetPort: 4001
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: news-agg-codeserver
+  namespace: dagster
+  labels:
+    app: news-aggregator
+    component: dagster-codeserver
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: news-aggregator
+      component: dagster-codeserver
+  template:
+    metadata:
+      labels:
+        app: news-aggregator
+        component: dagster-codeserver
+    spec:
+      initContainers:
+        - name: wait-for-dagster-postgres
+          image: busybox:1.36
+          command: ["sh", "-c", "until nc -z dagster-postgres 5432; do echo 'waiting for postgres'; sleep 2; done"]
+
+      containers:
+        - name: dagster-codeserver
+          image: localhost:5000/news-aggregator:latest  # <-- must match scripts/build.sh tag
+          imagePullPolicy: Always
+          command: ["tini", "--", "dagster"]
+          args: ["code-server", "start", "-h", "0.0.0.0", "-p", "4001", "-m", "dagster_src"]
+          ports:
+            - containerPort: 4001
+              name: grpc
+
+          envFrom:
+            - configMapRef:
+                name: dagster-env
+          env:
+            - name: DAGSTER_CURRENT_IMAGE
+              value: localhost:5000/news-aggregator:latest
+
+          volumeMounts:
+            - name: dagster-instance-config
+              mountPath: /opt/news-aggregator/dagster_src/dagster.yaml
+              subPath: dagster.yaml
+              readOnly: true
+
+          resources:
+            limits:
+              memory: 512Mi
+              cpu: 0.5
+
+          readinessProbe:
+            exec:
+              command: ["sh", "-c", "dagster api grpc-health-check -p 4001"]
+            initialDelaySeconds: 10
+            periodSeconds: 30
+            timeoutSeconds: 10
+            failureThreshold: 3
+
+          livenessProbe:
+            exec:
+              command: ["sh", "-c", "dagster api grpc-health-check -p 4001"]
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            timeoutSeconds: 10
+            failureThreshold: 3
+
+      volumes:
+        - name: dagster-instance-config
+          configMap:
+            name: dagster-instance

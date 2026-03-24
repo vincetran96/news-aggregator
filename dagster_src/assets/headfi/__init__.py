@@ -1,0 +1,2 @@
+"""Head-Fi asset definitions
+"""
