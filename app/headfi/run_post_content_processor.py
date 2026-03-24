@@ -6,17 +6,23 @@ On each run, only pages whose `insert_tstamp` is at or beyond the current waterm
 of `post_content` are processed. On first run, all successful raw pages are processed.
 """
 
+from duckdb import DuckDBPyConnection
+
 from src.processors.headfi.post_content import process_new_pages
 from src.storage.db import get_connection
 from src.storage.schemas.headfi.post_content import SCHEMA_DDL, TBL_DDL
 
 
+def process_post_content(conn: DuckDBPyConnection) -> None:
+    conn.execute(SCHEMA_DDL)
+    conn.execute(TBL_DDL)
+
+    process_new_pages(conn)
+
+
 def main() -> None:
     with get_connection() as conn:
-        conn.execute(SCHEMA_DDL)
-        conn.execute(TBL_DDL)
-
-        process_new_pages(conn)
+        process_post_content(conn)
 
 
 if __name__ == "__main__":

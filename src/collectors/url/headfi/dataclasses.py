@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 
 @dataclass
-class HeadFiThread:
+class HeadFiCrawlThread:
     """
     Represents a Head-Fi forum thread to be crawled.
     Pages are queried inclusively from start_i to end_i.

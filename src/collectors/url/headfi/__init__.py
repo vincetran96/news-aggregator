@@ -8,7 +8,7 @@ from duckdb import DuckDBPyConnection
 from httpx import AsyncClient
 
 from src.collectors.url.base import BaseUrlCollector, UrlCollectorResult
-from src.collectors.url.headfi.dataclasses import HeadFiThread, UrlCrawlMeta
+from src.collectors.url.headfi.dataclasses import HeadFiCrawlThread, UrlCrawlMeta
 from src.collectors.url.headfi.helpers import get_max_page_num, upsert_raw_pages
 from src.utils.datetime import now_utc
 
@@ -25,15 +25,15 @@ class HeadFiCrawlCoordinator:
         self._thread_base_url = thread_base_url
         self._conn = conn
 
-    def get_next_window(self, crawl_window: int) -> HeadFiThread:
+    def get_next_window(self, crawl_window: int) -> HeadFiCrawlThread:
         """
-        Returns a HeadFiThread starting one page beyond the current maximum,
+        Returns a HeadFiCrawlThread starting one page beyond the current maximum,
         spanning `crawl_window` pages.
         """
         max_page = get_max_page_num(self._conn, self._thread_base_url)
         start_i = (max_page + 1) if max_page is not None else 1
         end_i = start_i + crawl_window - 1
-        return HeadFiThread(
+        return HeadFiCrawlThread(
             base_url=self._thread_base_url,
             start_i=start_i,
             end_i=end_i,
@@ -43,7 +43,7 @@ class HeadFiCrawlCoordinator:
 class HeadFiURLCollector(BaseUrlCollector):
     def __init__(
         self,
-        threads: list[HeadFiThread],
+        threads: list[HeadFiCrawlThread],
         conn: DuckDBPyConnection,
         *args,
         follow_redirects: bool = False,
