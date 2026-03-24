@@ -21,6 +21,10 @@ from minio.error import S3Error
 class MinIODuckDBResource(ConfigurableResource):
     """
     Manages a DuckDB file backed by MinIO object storage.
+
+    All file paths are passed explicitly by the caller -- the resource holds
+    only MinIO connection details, bucket, and the default object key for the
+    DB file.
     """
 
     endpoint: str
@@ -28,7 +32,6 @@ class MinIODuckDBResource(ConfigurableResource):
     secret_key: str
     bucket: str = "news-aggregator"
     object_key: str = "data/news.db"
-    local_path: str = "/tmp/news.db"
 
     def _client(self) -> Minio:
         raw = self.endpoint
@@ -41,9 +44,9 @@ class MinIODuckDBResource(ConfigurableResource):
             secure=secure,
         )
 
-    def download(self) -> None:
+    def download(self, local_path: str) -> str:
         """
-        Download the DB file from MinIO to local_path.
+        Downloads the DB file from MinIO to *local_path* and returns it.
 
         On first run the object won't exist; this is expected and results in
         DuckDB creating a fresh file on first connect.  Any other S3 or
@@ -51,28 +54,34 @@ class MinIODuckDBResource(ConfigurableResource):
         """
         client = self._client()
         try:
-            client.fget_object(self.bucket, self.object_key, self.local_path)
+            client.fget_object(self.bucket, self.object_key, local_path)
         except S3Error as e:
             if e.code in ("NoSuchKey", "NoSuchBucket"):
-                return
+                return local_path
             raise
+        return local_path
 
-    def upload(self) -> None:
+    def upload(self, local_path: str, object_key: str | None = None) -> None:
         """
-        Upload the DB file from local_path to MinIO.
+        Uploads a local file to MinIO.
 
-        Creates the bucket on first use.  Any S3 or network error propagates
-        immediately and fails the step.
+        *object_key* defaults to ``self.object_key`` (the DB file).  Pass an
+        explicit key to upload arbitrary files (e.g. export artifacts).
+        Creates the bucket on first use.
         """
         client = self._client()
         if not client.bucket_exists(self.bucket):
             client.make_bucket(self.bucket)
-        client.fput_object(self.bucket, self.object_key, self.local_path)
+        client.fput_object(self.bucket, object_key or self.object_key, local_path)
 
     @contextmanager
-    def get_connection(self) -> Generator[duckdb.DuckDBPyConnection, None, None]:
-        """Open a DuckDB connection to the local file."""
-        conn = duckdb.connect(self.local_path)
+    def get_connection(
+        self, db_path: str
+    ) -> Generator[duckdb.DuckDBPyConnection, None, None]:
+        """
+        Opens a DuckDB connection to the file at *db_path*.
+        """
+        conn = duckdb.connect(db_path)
         try:
             yield conn
         finally:
