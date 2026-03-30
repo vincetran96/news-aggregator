@@ -1,7 +1,7 @@
 # App
 ## Common
 ```bash
-uv run -m app.common.preview_db headfi.raw_pages --select-columns page_num final_url insert_tstamp --order-by "insert_tstamp asc" "page_num desc"
+uv run -m app.common.execute_query /tmp/news.db "SELECT * FROM headfi.post_content_export_state"
 ```
 
 
@@ -51,7 +51,7 @@ A reference document capturing the key design choices made in the `news-aggregat
 
 **Decision:** A separate coordinator object owns the "what pages come next?" logic. The collector only knows how to fetch a given list of URLs.
 
-**Reasoning:** The coordinator queries the database, determines the window, and produces a `HeadFiThread`. The collector is unaware of any of this. This means you can change the incremental strategy (e.g. switch from window-based to gap-detection) without touching the HTTP layer, and you can test the window logic in isolation.
+**Reasoning:** The coordinator queries the database, determines the window, and produces a `HeadFiCrawlThread`. The collector is unaware of any of this. This means you can change the incremental strategy (e.g. switch from window-based to gap-detection) without touching the HTTP layer, and you can test the window logic in isolation.
 
 **Lesson:** Crawl strategy and HTTP transport are two distinct concerns even though they're superficially related. Separating them pays off the moment you need to change either independently.
 
